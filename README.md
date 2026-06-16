@@ -60,5 +60,11 @@ cd ytradio
 - `YTRADIO_INVIDIOUS` — instancia Invidious para buscar playlists en `list`
   (por defecto `https://inv.thepixora.com`).
 
+## Créditos
+`ytradio` no reinventa nada: orquesta tres herramientas excelentes.
+- [ytfzf](https://github.com/pystardust/ytfzf) — búsqueda y menú interactivo.
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) — extracción de streams de YouTube.
+- [mpv](https://mpv.io/) + [mpv-mpris](https://github.com/hoyon/mpv-mpris) — reproducción y controles de escritorio.
+
 ## Licencia
 MIT — ver [LICENSE](LICENSE).
