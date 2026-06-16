@@ -24,7 +24,9 @@ _(añade aquí un GIF: `assets/demo.gif`)_
   procesar los ~300 temas del mix; `prefetch-playlist` → saltos instantáneos.
 - 🎛️ **Controles de escritorio (MPRIS)**: aparece en el widget de medios de GNOME/KDE
   y responde a las teclas multimedia (⏮ ⏯ ⏭). Vía `mpv-mpris`.
-- 🏷️ **Título en vivo** y tiempo de reproducción.
+- 🏷️ **Título en vivo** y tiempo de reproducción, con indicador **▶ / ⏸ PAUSA**.
+- 📜 **Historial en pantalla**: cada tema deja su `♪ título` → ves la lista de lo ya sonado.
+- 🤫 **Salida limpia**: silencia el ruido de mpv (URLs, tracks, tags) y deja solo lo útil.
 
 ## Uso
 ```
