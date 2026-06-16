@@ -15,10 +15,8 @@ $ ytradio radio oliver tree
    ▶ 00:00:11 / 00:02:35
 ```
 
-![demo](assets/demo.gif)
-
-> ¿Generar el GIF? `./scripts/record-demo.sh` (graba con asciinema y lo convierte
-> a GIF con agg). Sigue las instrucciones en pantalla y commitea `assets/demo.gif`.
+> 🚧 **TODO**: GIF de demo pendiente. Genéralo con `./scripts/record-demo.sh`
+> (graba con asciinema → convierte a GIF con agg) y se incrustará aquí.
 
 ## Características
 - 🔎 **Búsqueda con miniaturas** dentro de la terminal (sixel vía chafa).
