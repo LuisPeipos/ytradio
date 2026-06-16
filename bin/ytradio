@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+# ytradio — radio/música de YouTube en la terminal, estilo Spotify.
+# Busca con miniaturas (ytfzf), reproduce audio (mpv) y expone controles
+# de escritorio vía MPRIS (título + ⏮ ⏯ ⏭ + teclas multimedia).
+set -euo pipefail
+
+VERSION="1.0.0"
+PROG="ytradio"
+
+die() { printf '%s: %s\n' "$PROG" "$1" >&2; exit 1; }
+have() { command -v "$1" >/dev/null 2>&1; }
+
+check_deps() {
+  local missing=()
+  for c in ytfzf mpv yt-dlp; do have "$c" || missing+=("$c"); done
+  if ((${#missing[@]})); then
+    die "faltan dependencias: ${missing[*]} (ver README → instalación)"
+  fi
+}
+
+# Opciones de mpv compartidas → variable global OPTS.
+# Solo audio + arranque rápido del mix (lazy) + título/tiempo en vivo.
+# Las cadenas ${media-title}/${time-pos} van en COMILLAS SIMPLES: son sintaxis
+# de mpv, no de bash, y deben llegar literales.
+build_mpv_opts() {
+  OPTS=(
+    --no-video
+    --ytdl-format=bestaudio/best
+    --ytdl-raw-options=yes-playlist=,lazy-playlist=
+    --prefetch-playlist=yes
+    '--term-playing-msg=♪  ${media-title}'
+    '--term-status-msg=   ▶ ${time-pos} / ${duration}'
+  )
+}
+
+# Reproduce el MIX/radio de un tema (o una playlist si la URL ya lo es).
+cmd_radio() {
+  [ $# -gt 0 ] || die "uso: $PROG radio <búsqueda>"
+  check_deps
+  local sel id
+  sel=$(ytfzf -c yt -t -T chafa-sixel -L "$@" 2>/dev/null \
+    | grep -oE 'https?://[^ ]*(watch\?v=|playlist\?list=)[^ ]+' | head -1)
+  [ -n "$sel" ] || { echo "Nada elegido."; return 0; }
+  build_mpv_opts
+  if [[ "$sel" == *list=* ]]; then
+    mpv "${OPTS[@]}" "$sel"
+  else
+    id=${sel##*v=}; id=${id%%&*}
+    mpv "${OPTS[@]}" "https://www.youtube.com/watch?v=${id}&list=RD${id}"
+  fi
+}
+
+# Busca PLAYLISTS por nombre y reproduce la elegida entera.
+cmd_list() {
+  [ $# -gt 0 ] || die "uso: $PROG list <búsqueda>"
+  check_deps
+  local inst url
+  inst="${YTRADIO_INVIDIOUS:-https://inv.thepixora.com}"
+  url=$(ytfzf --type=playlist --inv-instance="$inst" -L "$@" 2>/dev/null \
+    | grep -oE 'https?://[^ ]*playlist\?list=[^ ]+' | head -1)
+  [ -n "$url" ] || { echo "Nada elegido."; return 0; }
+  build_mpv_opts
+  mpv "${OPTS[@]}" "$url"
+}
+
+# Busca temas (menú con miniaturas) y reproduce los marcados (Tab + Enter).
+cmd_play() {
+  [ $# -gt 0 ] || die "uso: $PROG play <búsqueda>"
+  check_deps
+  ytfzf -c yt -m -t -T chafa-sixel "$@"
+}
+
+# Reproduce TODOS los resultados sin menú (directo).
+cmd_all() {
+  [ $# -gt 0 ] || die "uso: $PROG all <búsqueda>"
+  check_deps
+  ytfzf -c yt -m -A "$@"
+}
+
+# Muestra qué suena ahora (vía MPRIS / playerctl).
+cmd_now() {
+  have playerctl || die "instala 'playerctl' para usar 'now'"
+  playerctl metadata --format '♪ {{title}}   [{{status}}]  {{duration(position)}}/{{duration(mpris:length)}}' 2>/dev/null \
+    || echo "Nada sonando."
+}
+
+usage() {
+  cat <<EOF
+$PROG $VERSION — radio/música de YouTube en la terminal (estilo Spotify)
+
+USO:
+  $PROG radio <búsqueda>   Elige un tema y suena su MIX/radio (lista continua afín)
+  $PROG list  <búsqueda>   Busca PLAYLISTS y reproduce la elegida entera
+  $PROG play  <búsqueda>   Menú con miniaturas; marca con Tab y Enter para escuchar
+  $PROG all   <búsqueda>   Reproduce TODOS los resultados sin menú (directo)
+  $PROG now                Muestra la canción actual (necesita playerctl)
+  $PROG -h | --help        Esta ayuda
+  $PROG -v | --version     Versión
+
+CONTROLES (mientras suena, en mpv):
+  Espacio/p pausa · > / < siguiente/anterior · 9/0 volumen · q salir
+  En el escritorio (MPRIS): widget de medios + teclas multimedia ⏮ ⏯ ⏭
+
+REQUIERE: ytfzf, mpv, yt-dlp, chafa  (+ mpv-mpris y playerctl recomendados)
+VARIABLES: YTRADIO_INVIDIOUS = instancia Invidious para 'list' (búsqueda de playlists)
+EOF
+}
+
+main() {
+  local sub="${1:-}"; shift || true
+  case "$sub" in
+    radio) cmd_radio "$@" ;;
+    list)  cmd_list "$@" ;;
+    play)  cmd_play "$@" ;;
+    all)   cmd_all "$@" ;;
+    now)   cmd_now "$@" ;;
+    -v|--version) echo "$PROG $VERSION" ;;
+    -h|--help|"") usage ;;
+    *) die "subcomando desconocido: '$sub' (prueba '$PROG --help')" ;;
+  esac
+}
+
+main "$@"
