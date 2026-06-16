@@ -20,6 +20,8 @@ check_deps() {
 
 # Opciones de mpv compartidas → variable global OPTS.
 # Solo audio + arranque rápido del mix (lazy) + título/tiempo en vivo.
+# --msg-level=cplayer=warn silencia el ruido de mpv (Playing:/Audio/Subs/File tags)
+#   manteniendo nuestras líneas. term-status-msg muestra ⏸ PAUSA / ▶ según estado.
 # Las cadenas ${media-title}/${time-pos} van en COMILLAS SIMPLES: son sintaxis
 # de mpv, no de bash, y deben llegar literales.
 build_mpv_opts() {
@@ -28,8 +30,9 @@ build_mpv_opts() {
     --ytdl-format=bestaudio/best
     --ytdl-raw-options=yes-playlist=,lazy-playlist=
     --prefetch-playlist=yes
+    --msg-level=cplayer=warn
     '--term-playing-msg=♪  ${media-title}'
-    '--term-status-msg=   ▶ ${time-pos} / ${duration}'
+    '--term-status-msg=   ${?pause==yes:⏸ PAUSA}${?pause==no:▶}  ${time-pos} / ${duration}'
   )
 }
 
